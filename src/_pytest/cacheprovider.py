@@ -179,8 +179,11 @@ class LFPlugin(object):
             self.lastfailed.pop(report.nodeid, None)
         elif report.failed:
             self.lastfailed[report.nodeid] = True
+        print('Final: report.failed: %s' % str(self.lastfailed))
+        print('self: %s' % str(self))
 
     def pytest_collectreport(self, report):
+        print('collect report')
         passed = report.outcome in ("passed", "skipped")
         if passed:
             if report.nodeid in self.lastfailed:
@@ -190,6 +193,7 @@ class LFPlugin(object):
             self.lastfailed[report.nodeid] = True
 
     def pytest_collection_modifyitems(self, session, config, items):
+        print('collection modify')
         if self.active:
             if self.lastfailed:
                 previously_failed = []
@@ -214,11 +218,16 @@ class LFPlugin(object):
                 items[:] = []
 
     def pytest_sessionfinish(self, session):
+        print('LFPlugin::pytest_sessionfinish')
+        print('self: %s' % str(self))
+        print('self.lastfailed: %s' % str(self.lastfailed))
         config = self.config
         if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
             return
 
         saved_lastfailed = config.cache.get("cache/lastfailed", {})
+        print('saved_lastfailed: %s' % str(saved_lastfailed))
+        print(str(saved_lastfailed != self.lastfailed))
         if saved_lastfailed != self.lastfailed:
             config.cache.set("cache/lastfailed", self.lastfailed)
 
@@ -227,6 +236,7 @@ class NFPlugin(object):
     """ Plugin which implements the --nf (run new-first) option """
 
     def __init__(self, config):
+        print('NFPlugin::__init__')
         self.config = config
         self.active = config.option.newfirst
         self.cached_nodeids = config.cache.get("cache/nodeids", [])
